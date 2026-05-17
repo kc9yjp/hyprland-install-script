@@ -24,12 +24,15 @@ hl.bind(mainMod .. " + SHIFT + L", hl.dsp.window.resize({ x = 100,  y = 0,    re
 hl.bind(mainMod .. " + SHIFT + H", hl.dsp.window.resize({ x = -100, y = 0,    relative = true }))
 hl.bind(mainMod .. " + SHIFT + J", hl.dsp.window.resize({ x = 0,    y = -100, relative = true }))
 hl.bind(mainMod .. " + SHIFT + K", hl.dsp.window.resize({ x = 0,    y = 100,  relative = true }))
+hl.bind(mainMod .. " + CTRL + H", hl.dsp.window.move({ direction = "left" }))
+hl.bind(mainMod .. " + CTRL + L", hl.dsp.window.move({ direction = "right" }))
+hl.bind(mainMod .. " + CTRL + K", hl.dsp.window.move({ direction = "up" }))
+hl.bind(mainMod .. " + CTRL + J", hl.dsp.window.move({ direction = "down" }))
 
 -- Actions
 hl.bind(mainMod .. " + P",         hl.dsp.exec_cmd("~/.config/hypr/scripts/screenshot.sh"))
 hl.bind(mainMod .. " + X",         hl.dsp.exec_cmd("wlogout"))
 hl.bind(mainMod .. " + CTRL + A",  hl.dsp.exec_cmd("rofi -show drun -replace -i -theme ~/.config/rofi/launchers/type-1/style-6.rasi"))
-hl.bind(mainMod .. " + SHIFT + B", hl.dsp.exec_cmd("~/.config/waybar/launch.sh"))
 hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("~/.config/hypr/scripts/loadconfig.sh"))
 hl.bind(mainMod .. " + CTRL + C",  hl.dsp.exec_cmd("~/.config/scripts/cliphist.sh"))
 
@@ -56,4 +59,3 @@ hl.bind("XF86AudioNext",         hl.dsp.exec_cmd("playerctl next"))
 hl.bind("XF86AudioPrev",         hl.dsp.exec_cmd("playerctl previous"))
 hl.bind("XF86AudioMicMute",      hl.dsp.exec_cmd("pactl set-source-mute @DEFAULT_SOURCE@ toggle"))
 hl.bind("XF86Calculator",        hl.dsp.exec_cmd("qalculate-gtk"))
-hl.bind("XF86Lock",              hl.dsp.exec_cmd("hyprlock"))
