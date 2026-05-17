@@ -93,6 +93,8 @@ boot=$(gum choose systemd grub)
 echo "What is the resolution and refresh rate of your monitor?"
 echo "Answare in the following format eg. 3440x1440@144"
 resolution=$(gum input --placeholder "Resolution and refresh rate...")
+echo "Which key do you want to use as the mod key?"
+mod=$(gum choose SUPER ALT)
 echo "Resolution and refresh rate: ${resolution}"
 
 if gum confirm "Are you using Nvidia GPU?" ;then
@@ -277,6 +279,8 @@ hl.monitor({
     position = \"auto\",
     scale    = 1,
 })" > ./config/hypr/conf/monitor.lua
+
+sed -i "s/^local mainMod = .*/local mainMod = \"$mod\"/" ./config/hypr/conf/keybinding.lua
 
 cp -rf ./config/.gtkrc-2.0 ./config/.Xresources ./config/.bashrc ./config/.zshrc ~/
 mkdir -p ~/.config/qBittorrent && cp -rf ./config/qbittorrent/qbittorrent.qbtheme ~/.config/qBittorrent
