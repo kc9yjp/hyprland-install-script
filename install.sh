@@ -112,7 +112,7 @@ echo "Are you using systemd boot or grub?"
 boot=$(gum choose systemd grub)
 echo "What is the resolution and refresh rate of your monitor?"
 echo "Answare in the following format eg. 3440x1440@144"
-resolution=$(gum input --placeholder "Resolution and refresh rate...")
+resolution=$(gum input --placeholder "Resolution and refresh rate..." --value "1920x1080@60")
 echo "Which key do you want to use as the mod key?"
 mod=$(gum choose SUPER ALT)
 echo "Resolution and refresh rate: ${resolution}"
