@@ -13,9 +13,17 @@ NONE='\033[0m'
 _on_error() {
     local cmd="$1"
     echo
-    echo -e "${RED}  !! INSTALL FAILED !!"
-    echo "  Stopped at line ${BASH_LINENO[0]}: ${cmd}"
-    echo -e "  Fix the issue above and re-run the script.${NONE}"
+    echo -e "${RED}##############################################################"
+    echo    "##                                                          ##"
+    echo    "##       !! INSTALL FAILED — SCRIPT HAS STOPPED !!         ##"
+    echo    "##                                                          ##"
+    echo -e "##############################################################${NONE}"
+    echo
+    echo -e "  ${RED}Failed at line ${BASH_LINENO[0]}:${NONE}"
+    echo    "  ${cmd}"
+    echo
+    echo    "  Scroll up to see the full error message above."
+    echo    "  Fix the issue and re-run the script."
     echo
     exit 1
 }
@@ -329,7 +337,6 @@ sudo pacman -Sy --needed tmux yazi fastfetch htop fzf zoxide --noconfirm
 echo -e "${GREEN}"
 figlet "Dotfiles"
 echo -e "${NONE}"
-
 if $nvidia ;then
     echo \
 "-- Environment Variables
