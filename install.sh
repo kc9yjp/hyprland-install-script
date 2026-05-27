@@ -454,7 +454,7 @@ fi
 echo -e "${GREEN}"
 figlet "ZenKernel"
 echo -e "${NONE}"
-sudo pacman -Sy linux-zen linux-zen-headers --noconfirm
+sudo pacman -Sy --needed linux-zen linux-zen-headers --noconfirm
 if [[ "$boot" == "systemd" ]]; then
   sudo reinstall-kernels
 elif [[ "$boot" == "grub" ]]; then
