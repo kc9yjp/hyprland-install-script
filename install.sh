@@ -182,6 +182,7 @@ git config --global pull.ff only
 echo -e "${GREEN}"
 figlet "SSHKey"
 echo -e "${NONE}"
+echo ":: You will be prompted to choose a key location and passphrase."
 ssh-keygen -t ed25519 -C "${git_email}"
 
 # java
@@ -230,9 +231,9 @@ figlet "Neovim"
 echo -e "${NONE}"
 sudo pacman -Sy neovim ripgrep fd --noconfirm
 _installPackagesYay vim-plug
-git clone https://github.com/NvChad/starter ~/.config/nvchad
-git clone --depth 1 https://github.com/AstroNvim/template ~/.config/astronvim
-git clone https://github.com/LazyVim/starter ~/.config/lazyvim
+[ -d ~/.config/nvchad ]    || git clone https://github.com/NvChad/starter ~/.config/nvchad
+[ -d ~/.config/astronvim ] || git clone --depth 1 https://github.com/AstroNvim/template ~/.config/astronvim
+[ -d ~/.config/lazyvim ]   || git clone https://github.com/LazyVim/starter ~/.config/lazyvim
 
 # -----------------------------------------------------
 # apps
@@ -371,7 +372,7 @@ echo "/swapfile				  swap		 swap	 defaults   0 0" | sudo tee -a /etc/fstab
 # check for LUKS encryption and ensure dracut crypt module is present
 if lsblk -o TYPE | grep -q "crypt"; then
     echo ":: Encrypted drive detected."
-    if ! grep -rq "crypt" /etc/dracut.conf.d/ 2>/dev/null; then
+    if ! grep -rq 'add_dracutmodules.*crypt' /etc/dracut.conf.d/ 2>/dev/null; then
         echo ":: Adding crypt module to dracut config..."
         echo 'add_dracutmodules+=" crypt "' | sudo tee /etc/dracut.conf.d/crypt.conf
     else
