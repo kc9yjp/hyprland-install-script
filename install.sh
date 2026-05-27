@@ -364,6 +364,17 @@ echo "/swapfile				  swap		 swap	 defaults   0 0" | sudo tee -a /etc/fstab
 # kernel and drivers
 # -----------------------------------------------------
 
+# check for LUKS encryption and ensure dracut crypt module is present
+if lsblk -o TYPE | grep -q "crypt"; then
+    echo ":: Encrypted drive detected."
+    if ! grep -rq "crypt" /etc/dracut.conf.d/ 2>/dev/null; then
+        echo ":: Adding crypt module to dracut config..."
+        echo 'add_dracutmodules+=" crypt "' | sudo tee /etc/dracut.conf.d/crypt.conf
+    else
+        echo ":: dracut crypt module already configured."
+    fi
+fi
+
 # zen kernel
 echo -e "${GREEN}"
 figlet "ZenKernel"
