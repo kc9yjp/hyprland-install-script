@@ -16,16 +16,9 @@ NONE='\033[0m'
 # functions
 # -----------------------------------------------------
 
-# check if package is installed
+# check if package is installed (any version)
 _isInstalledPacman() {
-    package="$1";
-    check="$(sudo pacman -Qs --color always "${package}" | grep "local" | grep "${package} ")";
-    if [ -n "${check}" ] ; then
-        echo 0; #'0' means 'true' in Bash
-        return; #true
-    fi;
-    echo 1; #'1' means 'false' in Bash
-    return; #false
+    pacman -Q "$1" &>/dev/null && echo 0 || echo 1
 }
 
 # install required packages
