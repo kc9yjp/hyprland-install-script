@@ -21,7 +21,7 @@ NONE='\033[0m'
 _gum() {
     local tmp exit_code
     tmp=$(mktemp)
-    gum "$@" >"$tmp" 2>/dev/tty
+    gum "$@" >"$tmp" 2> >(tee /dev/tty >&2)
     exit_code=$?
     cat "$tmp"
     rm -f "$tmp"
@@ -152,6 +152,36 @@ else
     fi
 fi
 
+# -----------------------------------------------------
+# installation plan
+# -----------------------------------------------------
+
+echo
+echo "The following steps will be performed:"
+echo
+echo "   1.  Core packages    — Hyprland, waybar, rofi, SDDM, fonts, themes"
+echo "   2.  Git              — Configure global user name and email"
+echo "   3.  SSH key          — Generate a new ed25519 key pair"
+echo "   4.  Java             — JDK 25, Maven, google-java-format"
+echo "   5.  Python           — pip"
+echo "   6.  Node.js          — NVM + LTS Node"
+echo "   7.  Docker           — Docker + docker-compose, add user to docker group"
+echo "   8.  VSCode + Bruno   — Visual Studio Code, Bruno REST client"
+echo "   9.  Neovim           — Neovim + NvChad / AstroNvim / LazyVim starters"
+echo "  10.  GUI apps         — browsers, office, media, utilities"
+echo "  11.  Terminal utils   — tmux, yazi, fastfetch, htop, fzf, zoxide"
+echo "  12.  Dotfiles         — copy configs and themes to ~/.config"
+echo "  13.  SDDM theme       — sddm-astronaut-theme"
+echo "  14.  Wallpapers       — copy to ~/Pictures"
+echo "  15.  System           — enable bluetooth, fstrim, swapfile"
+echo "  16.  Zen kernel       — linux-zen + headers, rebuild bootloader"
+if $nvidia; then
+echo "  17.  Nvidia drivers   — nvidia-dkms, configure DRM and dracut"
+elif $intel; then
+echo "  17.  Intel drivers    — intel-media-driver, libva-utils"
+fi
+echo
+
 # make yay faster - do not use compression
 sudo sed -i "s/PKGEXT=.*/PKGEXT='.pkg.tar'/g" /etc/makepkg.conf
 sudo sed -i "s/SRCEXT=.*/SRCEXT='.src.tar'/g" /etc/makepkg.conf
@@ -183,6 +213,8 @@ _installPackagesYay waybar-git wlogout waypaper hyprland-qtutils qogir-gtk-theme
 echo -e "${GREEN}"
 figlet "Git"
 echo -e "${NONE}"
+echo ":: Sets your global git identity (stored in ~/.gitconfig)."
+echo ":: This is used to tag all commits you make on this machine."
 git_name=$(_gum input --placeholder "Enter git name...")
 echo "Name: ${git_name}"
 git_email=$(_gum input --placeholder "Enter git email...")
@@ -194,15 +226,26 @@ git config --global pull.ff only
 echo -e "${GREEN}"
 figlet "SSHKey"
 echo -e "${NONE}"
-echo ":: You will be prompted to choose a key location and passphrase."
-ssh-keygen -t ed25519 -C "${git_email}"
+echo ":: Generates a new ed25519 SSH key pair (~/.ssh/id_ed25519)."
+echo ":: You will be prompted for a file location and passphrase."
+echo ":: Upload the public key (~/.ssh/id_ed25519.pub) to GitHub/GitLab afterwards."
+if _gum confirm "Generate SSH key now?" ;then
+    ssh-keygen -t ed25519 -C "${git_email}"
+else
+    echo ":: Skipping SSH key generation."
+fi
 
 # java
 echo -e "${GREEN}"
 figlet "Java"
 echo -e "${NONE}"
-sudo pacman -Sy --needed jdk25-openjdk maven --noconfirm
-_installPackagesYay google-java-format
+echo ":: Installs JDK 25, Maven, and google-java-format for Java development."
+if _gum confirm "Install Java development tools?" ;then
+    sudo pacman -Sy --needed jdk25-openjdk maven --noconfirm
+    _installPackagesYay google-java-format
+else
+    echo ":: Skipping Java."
+fi
 
 # python
 echo -e "${GREEN}"
