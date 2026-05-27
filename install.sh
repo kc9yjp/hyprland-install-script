@@ -327,10 +327,7 @@ figlet "Rofi"
 echo -e "${NONE}"
 if [ ! -d ~/.config/rofi ]; then
     git clone --depth=1 https://github.com/adi1090x/rofi.git ~/rofi
-    cd ~/rofi
-    chmod +x setup.sh
-    sh setup.sh
-    cd -
+    (cd ~/rofi && chmod +x setup.sh && sh setup.sh)
     rm -rf ~/rofi
 else
     echo ":: Rofi themes already installed, skipping."
@@ -341,8 +338,10 @@ echo -e "${GREEN}"
 figlet "SDDM"
 echo -e "${NONE}"
 sudo systemctl enable sddm
-[ -d /usr/share/sddm/themes/sddm-astronaut-theme ] || sudo git clone https://github.com/keyitdev/sddm-astronaut-theme.git /usr/share/sddm/themes/sddm-astronaut-theme
-sudo cp /usr/share/sddm/themes/sddm-astronaut-theme/Fonts/* /usr/share/fonts/
+if [ ! -d /usr/share/sddm/themes/sddm-astronaut-theme ]; then
+    sudo git clone https://github.com/keyitdev/sddm-astronaut-theme.git /usr/share/sddm/themes/sddm-astronaut-theme
+    sudo cp /usr/share/sddm/themes/sddm-astronaut-theme/Fonts/* /usr/share/fonts/
+fi
 echo "[Theme]
 Current=sddm-astronaut-theme" | sudo tee /etc/sddm.conf
 
@@ -351,7 +350,7 @@ echo -e "${GREEN}"
 figlet "WallpapersScreenshots"
 echo -e "${NONE}"
 mkdir -p ~/Pictures/screenshots
-cp -r wallpapers/** ~/Pictures
+[ ! -f ~/Pictures/wallpaper1.jpg ] && cp -r wallpapers/** ~/Pictures
 
 # system configs
 echo -e "${GREEN}"
@@ -405,7 +404,7 @@ if $nvidia ;then
     echo -e "${GREEN}"
     figlet "Nvidia"
     echo -e "${NONE}"
-    sudo pacman -S --needed nvidia-dkms nvidia-utils lib32-nvidia-utils nvidia-settings libva-nvidia-driver --noconfirm
+    sudo pacman -Sy --needed nvidia-dkms nvidia-utils lib32-nvidia-utils nvidia-settings libva-nvidia-driver --noconfirm
     grep -qF 'nvidia_drm' /etc/dracut.conf.d/nvidia.conf 2>/dev/null || echo "force_drivers+=\" nvidia nvidia_modeset nvidia_uvm nvidia_drm \"" | sudo tee -a /etc/dracut.conf.d/nvidia.conf
     grep -qF 'nvidia_drm' /etc/modprobe.d/nvidia.conf 2>/dev/null || echo "options nvidia_drm modeset=1 fbdev=1" | sudo tee -a /etc/modprobe.d/nvidia.conf
     if [[ "$boot" == "systemd" ]]; then
@@ -421,7 +420,7 @@ if $intel ;then
     echo -e "${GREEN}"
     figlet "Intel"
     echo -e "${NONE}"
-    sudo pacman -S --needed intel-media-driver libva-utils --noconfirm
+    sudo pacman -Sy --needed intel-media-driver libva-utils --noconfirm
 fi
 
 # cleanup
