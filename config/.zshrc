@@ -116,13 +116,15 @@ alias astronvim="NVIM_APPNAME=astronvim nvim"
 export PATH="$PATH:$HOME/.local/share/JetBrains/Toolbox/scripts"
 
 # Shell integrations
-eval "$(fzf --zsh)"
-if [ -z "$DISABLE_ZOXIDE" ]; then
+command -v fzf &>/dev/null && eval "$(fzf --zsh)"
+if [ -z "$DISABLE_ZOXIDE" ] && command -v zoxide &>/dev/null; then
   eval "$(zoxide init --cmd cd zsh)"
 fi
 
 # Starship
 # https://github.com/starship/starship/issues/560#issuecomment-2339030231
-precmd() { precmd() { echo "" } }
-alias clear="precmd() { precmd() { echo } } && clear"
-eval "$(starship init zsh)"
+if command -v starship &>/dev/null; then
+  precmd() { precmd() { echo "" } }
+  alias clear="precmd() { precmd() { echo } } && clear"
+  eval "$(starship init zsh)"
+fi

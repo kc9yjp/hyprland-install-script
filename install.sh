@@ -43,6 +43,26 @@ _installPackagesPacman() {
     sudo pacman --noconfirm -S "${toInstall[@]}";
 }
 
+# install AUR packages, one at a time with up to 3 retries each
+_installPackagesYay() {
+    for pkg; do
+        if [[ $(_isInstalledPacman "${pkg}") == 0 ]]; then
+            echo "${pkg} is already installed."
+            continue
+        fi
+        local attempt=0
+        until yay --noconfirm -S "${pkg}"; do
+            attempt=$((attempt + 1))
+            if [ $attempt -ge 3 ]; then
+                echo ":: WARNING: Failed to install ${pkg} after 3 attempts, skipping."
+                break
+            fi
+            echo ":: Retry ${attempt}/3 for ${pkg} in 5s..."
+            sleep 5
+        done
+    done
+}
+
 # required packages for the installer
 installer_packages=(
     "wget"
@@ -99,6 +119,7 @@ echo "Resolution and refresh rate: ${resolution}"
 
 if gum confirm "Are you using Nvidia GPU?" ;then
     nvidia=true
+    intel=false
     echo
     echo ":: Nvidia GPU is not officially supported by Hyprland. If you face any problems, please check Hyprland Wiki"
     echo ":: https://wiki.hyprland.org/Nvidia/"
@@ -116,6 +137,11 @@ if gum confirm "Are you using Nvidia GPU?" ;then
     fi
 else
     nvidia=false
+    if gum confirm "Are you using Intel GPU?" ;then
+        intel=true
+    else
+        intel=false
+    fi
 fi
 
 # make yay faster - do not use compression
@@ -139,7 +165,7 @@ sudo pacman -Sy hyprland rofi-wayland dunst hyprpaper hyprlock hypridle xdg-desk
                 ttf-font-awesome otf-font-awesome ttf-fira-sans ttf-fira-code   \
                 ttf-firacode-nerd gnome-themes-extra gtk-engine-murrine nwg-look \
                 --noconfirm
-yay -S waybar-git wlogout waypaper hyprland-qtutils qogir-gtk-theme qogir-icon-theme --noconfirm
+_installPackagesYay waybar-git wlogout waypaper hyprland-qtutils qogir-gtk-theme qogir-icon-theme
 
 # -----------------------------------------------------
 # development
@@ -164,7 +190,7 @@ if gum confirm "Do you need development setup?" ;then
   figlet "Java"
   echo -e "${NONE}"
   sudo pacman -Sy jdk25-openjdk maven --noconfirm
-  yay -S google-java-format --noconfirm
+  _installPackagesYay google-java-format
 
   # python
   echo -e "${GREEN}"
@@ -173,13 +199,13 @@ if gum confirm "Do you need development setup?" ;then
   sudo pacman -Sy python-pip --noconfirm
 
   # jetbrains
-  yay -S jetbrains-toolbox --noconfirm
+  _installPackagesYay jetbrains-toolbox
 
   # node
   echo -e "${GREEN}"
   figlet "Node"
   echo -e "${NONE}"
-  yay -S nvm --noconfirm
+  _installPackagesYay nvm
   source /usr/share/nvm/init-nvm.sh
   nvm install --lts
 
@@ -197,17 +223,17 @@ if gum confirm "Do you need development setup?" ;then
   figlet "VSCode"
   echo -e "${NONE}"
   sudo pacman -Sy gnome-keyring --noconfirm
-  yay -S visual-studio-code-bin --noconfirm
+  _installPackagesYay visual-studio-code-bin
 
   # rest client
-  yay -S bruno-bin --noconfirm
+  _installPackagesYay bruno-bin
 
   # neovim
   echo -e "${GREEN}"
   figlet "Neovim"
   echo -e "${NONE}"
   sudo pacman -Sy neovim fzf zoxide ripgrep fd --noconfirm
-  yay -S vim-plug --noconfirm
+  _installPackagesYay vim-plug
   git clone https://github.com/NvChad/starter ~/.config/nvchad
   git clone --depth 1 https://github.com/AstroNvim/template ~/.config/astronvim
   git clone https://github.com/LazyVim/starter ~/.config/lazyvim
@@ -222,7 +248,7 @@ echo -e "${GREEN}"
 figlet "GUI Apps"
 echo -e "${NONE}"
 sudo pacman -Sy okular feh gwenview mpv qbittorrent bitwarden qalculate-gtk veracrypt discord --noconfirm
-yay -S onlyoffice-bin brave-bin librewolf-bin zen-browser-bin ventoy-bin --noconfirm
+_installPackagesYay onlyoffice-bin brave-bin librewolf-bin zen-browser-bin ventoy-bin
 
 # set default browser
 unset BROWSER
@@ -232,7 +258,7 @@ xdg-settings set default-web-browser zen-browser.desktop
 echo -e "${GREEN}"
 figlet "TerminalUtils"
 echo -e "${NONE}"
-sudo pacman -Sy tmux yazi fastfetch htop --noconfirm
+sudo pacman -Sy tmux yazi fastfetch htop fzf zoxide --noconfirm
 
 
 # -----------------------------------------------------
@@ -267,6 +293,15 @@ echo \
 "
 -- Flickering fix
 require(\"conf/electron-flickering-fix\")" >> ./config/hypr/hyprland.lua
+fi
+
+if $intel ;then
+    echo \
+"
+-- Intel GPU
+-- https://wiki.hyprland.org/FAQ/
+hl.env(\"LIBVA_DRIVER_NAME\", \"iHD\")
+hl.env(\"VDPAU_DRIVER\", \"va_gl\")" >> ./config/hypr/conf/environment.lua
 fi
 
 echo \
@@ -308,7 +343,10 @@ echo -e "${NONE}"
 sudo systemctl enable sddm
 sudo git clone https://github.com/keyitdev/sddm-astronaut-theme.git /usr/share/sddm/themes/sddm-astronaut-theme
 sudo cp /usr/share/sddm/themes/sddm-astronaut-theme/Fonts/* /usr/share/fonts/
-echo "[Theme]
+echo "[General]
+DisplayServer=wayland
+
+[Theme]
 Current=sddm-astronaut-theme" | sudo tee /etc/sddm.conf
 
 # wallpapers and screenshots
@@ -364,6 +402,14 @@ if $nvidia ;then
       sudo dracut-rebuild
       sudo grub-mkconfig -o /boot/grub/grub.cfg
     fi
+fi
+
+# intel drivers
+if $intel ;then
+    echo -e "${GREEN}"
+    figlet "Intel"
+    echo -e "${NONE}"
+    sudo pacman -S intel-media-driver libva-utils --noconfirm
 fi
 
 # cleanup

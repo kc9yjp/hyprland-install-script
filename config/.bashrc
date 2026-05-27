@@ -63,13 +63,15 @@ alias astronvim="NVIM_APPNAME=astronvim nvim"
 export PATH="$PATH:$HOME/.local/share/JetBrains/Toolbox/scripts"
 
 # Shell integrations
-eval "$(fzf --bash)"
-if [ -z "$DISABLE_ZOXIDE" ]; then
+command -v fzf &>/dev/null && eval "$(fzf --bash)"
+if [ -z "$DISABLE_ZOXIDE" ] && command -v zoxide &>/dev/null; then
   eval "$(zoxide init --cmd cd bash)"
 fi
-source /usr/share/nvm/init-nvm.sh
+[ -f /usr/share/nvm/init-nvm.sh ] && source /usr/share/nvm/init-nvm.sh
 
 # Starship
 # https://github.com/starship/starship/issues/560#issuecomment-2197994300
-PROMPT_COMMAND="export PROMPT_COMMAND=echo"
-eval "$(starship init bash)"
+if command -v starship &>/dev/null; then
+  PROMPT_COMMAND="export PROMPT_COMMAND=echo"
+  eval "$(starship init bash)"
+fi
