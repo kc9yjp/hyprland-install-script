@@ -5,6 +5,9 @@ if [ "$(id -u)" = 0 ]; then
     exit 1
 fi
 
+LOG_FILE="$HOME/hyprland-install.log"
+exec > >(tee -a "$LOG_FILE") 2>&1
+
 clear
 GREEN='\033[0;32m'
 NONE='\033[0m'
@@ -13,16 +16,9 @@ NONE='\033[0m'
 # functions
 # -----------------------------------------------------
 
-# check if package is installed
+# check if package is installed (any version)
 _isInstalledPacman() {
-    package="$1";
-    check="$(sudo pacman -Qs --color always "${package}" | grep "local" | grep "${package} ")";
-    if [ -n "${check}" ] ; then
-        echo 0; #'0' means 'true' in Bash
-        return; #true
-    fi;
-    echo 1; #'1' means 'false' in Bash
-    return; #false
+    pacman -Q "$1" &>/dev/null && echo 0 || echo 1
 }
 
 # install required packages
@@ -41,6 +37,26 @@ _installPackagesPacman() {
     fi;
     printf "Package not installed:\n%s\n" "${toInstall[@]}";
     sudo pacman --noconfirm -S "${toInstall[@]}";
+}
+
+# install AUR packages, one at a time with up to 3 retries each
+_installPackagesYay() {
+    for pkg; do
+        if [[ $(_isInstalledPacman "${pkg}") == 0 ]]; then
+            echo "${pkg} is already installed."
+            continue
+        fi
+        local attempt=0
+        until yay --noconfirm -S "${pkg}"; do
+            attempt=$((attempt + 1))
+            if [ $attempt -ge 3 ]; then
+                echo ":: WARNING: Failed to install ${pkg} after 3 attempts, skipping."
+                break
+            fi
+            echo ":: Retry ${attempt}/3 for ${pkg} in 5s..."
+            sleep 5
+        done
+    done
 }
 
 # required packages for the installer
@@ -92,13 +108,14 @@ echo "Are you using systemd boot or grub?"
 boot=$(gum choose systemd grub)
 echo "What is the resolution and refresh rate of your monitor?"
 echo "Answare in the following format eg. 3440x1440@144"
-resolution=$(gum input --placeholder "Resolution and refresh rate...")
+resolution=$(gum input --placeholder "Resolution and refresh rate..." --value "1920x1080@60")
 echo "Which key do you want to use as the mod key?"
 mod=$(gum choose SUPER ALT)
 echo "Resolution and refresh rate: ${resolution}"
 
 if gum confirm "Are you using Nvidia GPU?" ;then
     nvidia=true
+    intel=false
     echo
     echo ":: Nvidia GPU is not officially supported by Hyprland. If you face any problems, please check Hyprland Wiki"
     echo ":: https://wiki.hyprland.org/Nvidia/"
@@ -116,6 +133,11 @@ if gum confirm "Are you using Nvidia GPU?" ;then
     fi
 else
     nvidia=false
+    if gum confirm "Are you using Intel GPU?" ;then
+        intel=true
+    else
+        intel=false
+    fi
 fi
 
 # make yay faster - do not use compression
@@ -139,47 +161,43 @@ sudo pacman -Sy hyprland rofi-wayland dunst hyprpaper hyprlock hypridle xdg-desk
                 ttf-font-awesome otf-font-awesome ttf-fira-sans ttf-fira-code   \
                 ttf-firacode-nerd gnome-themes-extra gtk-engine-murrine nwg-look \
                 --noconfirm
-yay -S waybar-git wlogout waypaper hyprland-qtutils qogir-gtk-theme qogir-icon-theme --noconfirm
+_installPackagesYay waybar-git wlogout waypaper hyprland-qtutils qogir-gtk-theme qogir-icon-theme
 
 # -----------------------------------------------------
 # development
 # -----------------------------------------------------
 
-if gum confirm "Do you need development setup?" ;then
-  # git
-  echo -e "${GREEN}"
-  figlet "Git"
-  echo -e "${NONE}"
-  git_name=$(gum input --placeholder "Enter git name...")
-  echo "Name: ${git_name}"
-  git_email=$(gum input --placeholder "Enter git email...")
-  echo "Email: ${git_email}"
-  git config --global user.name "${git_name}"
-  git config --global user.email "${git_email}"
-  git config --global pull.ff only
-  ssh-keygen
+# development
+echo -e "${GREEN}"
+figlet "Git"
+echo -e "${NONE}"
+git_name=$(gum input --placeholder "Enter git name...")
+echo "Name: ${git_name}"
+git_email=$(gum input --placeholder "Enter git email...")
+echo "Email: ${git_email}"
+git config --global user.name "${git_name}"
+git config --global user.email "${git_email}"
+git config --global pull.ff only
+ssh-keygen
 
-  # java
-  echo -e "${GREEN}"
-  figlet "Java"
-  echo -e "${NONE}"
-  sudo pacman -Sy jdk25-openjdk maven --noconfirm
-  yay -S google-java-format --noconfirm
+# java
+echo -e "${GREEN}"
+figlet "Java"
+echo -e "${NONE}"
+sudo pacman -Sy jdk25-openjdk maven --noconfirm
+_installPackagesYay google-java-format
 
-  # python
-  echo -e "${GREEN}"
-  figlet "Python"
-  echo -e "${NONE}"
-  sudo pacman -Sy python-pip --noconfirm
+# python
+echo -e "${GREEN}"
+figlet "Python"
+echo -e "${NONE}"
+sudo pacman -Sy python-pip --noconfirm
 
-  # jetbrains
-  yay -S jetbrains-toolbox --noconfirm
-
-  # node
+# node
   echo -e "${GREEN}"
   figlet "Node"
   echo -e "${NONE}"
-  yay -S nvm --noconfirm
+  _installPackagesYay nvm
   source /usr/share/nvm/init-nvm.sh
   nvm install --lts
 
@@ -197,21 +215,20 @@ if gum confirm "Do you need development setup?" ;then
   figlet "VSCode"
   echo -e "${NONE}"
   sudo pacman -Sy gnome-keyring --noconfirm
-  yay -S visual-studio-code-bin --noconfirm
+  _installPackagesYay visual-studio-code-bin
 
   # rest client
-  yay -S bruno-bin --noconfirm
+  _installPackagesYay bruno-bin
 
   # neovim
   echo -e "${GREEN}"
   figlet "Neovim"
   echo -e "${NONE}"
   sudo pacman -Sy neovim fzf zoxide ripgrep fd --noconfirm
-  yay -S vim-plug --noconfirm
+  _installPackagesYay vim-plug
   git clone https://github.com/NvChad/starter ~/.config/nvchad
   git clone --depth 1 https://github.com/AstroNvim/template ~/.config/astronvim
   git clone https://github.com/LazyVim/starter ~/.config/lazyvim
-fi
 
 # -----------------------------------------------------
 # apps
@@ -222,7 +239,7 @@ echo -e "${GREEN}"
 figlet "GUI Apps"
 echo -e "${NONE}"
 sudo pacman -Sy okular feh gwenview mpv qbittorrent bitwarden qalculate-gtk veracrypt discord --noconfirm
-yay -S onlyoffice-bin brave-bin librewolf-bin zen-browser-bin ventoy-bin --noconfirm
+_installPackagesYay onlyoffice-bin brave-bin librewolf-bin zen-browser-bin ventoy-bin
 
 # set default browser
 unset BROWSER
@@ -232,7 +249,7 @@ xdg-settings set default-web-browser zen-browser.desktop
 echo -e "${GREEN}"
 figlet "TerminalUtils"
 echo -e "${NONE}"
-sudo pacman -Sy tmux yazi fastfetch htop --noconfirm
+sudo pacman -Sy tmux yazi fastfetch htop fzf zoxide --noconfirm
 
 
 # -----------------------------------------------------
@@ -267,6 +284,15 @@ echo \
 "
 -- Flickering fix
 require(\"conf/electron-flickering-fix\")" >> ./config/hypr/hyprland.lua
+fi
+
+if $intel ;then
+    echo \
+"
+-- Intel GPU
+-- https://wiki.hyprland.org/FAQ/
+hl.env(\"LIBVA_DRIVER_NAME\", \"iHD\")
+hl.env(\"VDPAU_DRIVER\", \"va_gl\")" >> ./config/hypr/conf/environment.lua
 fi
 
 echo \
@@ -366,6 +392,14 @@ if $nvidia ;then
     fi
 fi
 
+# intel drivers
+if $intel ;then
+    echo -e "${GREEN}"
+    figlet "Intel"
+    echo -e "${NONE}"
+    sudo pacman -S intel-media-driver libva-utils --noconfirm
+fi
+
 # cleanup
 echo -e "${GREEN}"
 figlet "Cleanup"
@@ -382,3 +416,4 @@ echo -e "${NONE}"
 
 echo
 echo "DONE! Please reboot your system!"
+echo ":: Full install log saved to $LOG_FILE"
