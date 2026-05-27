@@ -455,12 +455,16 @@ fi
 echo -e "${GREEN}"
 figlet "ZenKernel"
 echo -e "${NONE}"
-sudo pacman -Sy --needed linux-zen linux-zen-headers --noconfirm
-if [[ "$boot" == "systemd" ]]; then
-  sudo reinstall-kernels
-elif [[ "$boot" == "grub" ]]; then
-  sudo dracut-rebuild
-  sudo grub-mkconfig -o /boot/grub/grub.cfg
+if ! pacman -Q linux-zen &>/dev/null; then
+    sudo pacman -Sy --needed linux-zen linux-zen-headers --noconfirm
+    if [[ "$boot" == "systemd" ]]; then
+        sudo reinstall-kernels
+    elif [[ "$boot" == "grub" ]]; then
+        sudo dracut-rebuild
+        sudo grub-mkconfig -o /boot/grub/grub.cfg
+    fi
+else
+    echo ":: Zen kernel already installed, skipping bootloader rebuild."
 fi
 
 # nvidia drivers
@@ -469,13 +473,18 @@ if $nvidia ;then
     figlet "Nvidia"
     echo -e "${NONE}"
     sudo pacman -Sy --needed nvidia-dkms nvidia-utils lib32-nvidia-utils nvidia-settings libva-nvidia-driver --noconfirm
-    grep -qF 'nvidia_drm' /etc/dracut.conf.d/nvidia.conf 2>/dev/null || echo "force_drivers+=\" nvidia nvidia_modeset nvidia_uvm nvidia_drm \"" | sudo tee -a /etc/dracut.conf.d/nvidia.conf
-    grep -qF 'nvidia_drm' /etc/modprobe.d/nvidia.conf 2>/dev/null || echo "options nvidia_drm modeset=1 fbdev=1" | sudo tee -a /etc/modprobe.d/nvidia.conf
-    if [[ "$boot" == "systemd" ]]; then
-      sudo reinstall-kernels
-    elif [[ "$boot" == "grub" ]]; then
-      sudo dracut-rebuild
-      sudo grub-mkconfig -o /boot/grub/grub.cfg
+    needs_rebuild=false
+    grep -qF 'nvidia_drm' /etc/dracut.conf.d/nvidia.conf 2>/dev/null || { echo "force_drivers+=\" nvidia nvidia_modeset nvidia_uvm nvidia_drm \"" | sudo tee -a /etc/dracut.conf.d/nvidia.conf; needs_rebuild=true; }
+    grep -qF 'nvidia_drm' /etc/modprobe.d/nvidia.conf 2>/dev/null || { echo "options nvidia_drm modeset=1 fbdev=1" | sudo tee -a /etc/modprobe.d/nvidia.conf; needs_rebuild=true; }
+    if $needs_rebuild; then
+        if [[ "$boot" == "systemd" ]]; then
+            sudo reinstall-kernels
+        elif [[ "$boot" == "grub" ]]; then
+            sudo dracut-rebuild
+            sudo grub-mkconfig -o /boot/grub/grub.cfg
+        fi
+    else
+        echo ":: Nvidia config already set, skipping bootloader rebuild."
     fi
 fi
 
