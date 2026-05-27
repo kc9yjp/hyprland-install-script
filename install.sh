@@ -209,7 +209,7 @@ sudo pacman -Sy --needed hyprland rofi-wayland dunst hyprpaper hyprlock hypridle
                 network-manager-applet blueman brightnessctl \
                 slurp grim xclip swappy \
                 ttf-font-awesome otf-font-awesome ttf-fira-sans ttf-fira-code   \
-                ttf-firacode-nerd gnome-themes-extra gtk-engine-murrine nwg-look \
+                ttf-firacode-nerd gnome-themes-extra nwg-look \
                 --noconfirm
 _installPackagesYay waybar-git wlogout waypaper hyprland-qtutils qogir-gtk-theme qogir-icon-theme
 
