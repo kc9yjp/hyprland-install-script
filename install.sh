@@ -6,7 +6,7 @@ if [ "$(id -u)" = 0 ]; then
 fi
 
 LOG_FILE="$HOME/hyprland-install.log"
-exec > >(tee -a "$LOG_FILE") 2>&1
+exec > >(tee "$LOG_FILE") 2>&1
 
 clear
 GREEN='\033[0;32m'
@@ -107,7 +107,7 @@ echo -e "${NONE}"
 echo "Are you using systemd boot or grub?"
 boot=$(gum choose systemd grub)
 echo "What is the resolution and refresh rate of your monitor?"
-echo "Answare in the following format eg. 3440x1440@144"
+echo "Answer in the following format eg. 3440x1440@144"
 resolution=$(gum input --placeholder "Resolution and refresh rate..." --value "1920x1080@60")
 echo "Which key do you want to use as the mod key?"
 mod=$(gum choose SUPER ALT)
@@ -178,7 +178,11 @@ echo "Email: ${git_email}"
 git config --global user.name "${git_name}"
 git config --global user.email "${git_email}"
 git config --global pull.ff only
-ssh-keygen
+
+echo -e "${GREEN}"
+figlet "SSHKey"
+echo -e "${NONE}"
+ssh-keygen -t ed25519 -C "${git_email}"
 
 # java
 echo -e "${GREEN}"
@@ -194,41 +198,41 @@ echo -e "${NONE}"
 sudo pacman -Sy python-pip --noconfirm
 
 # node
-  echo -e "${GREEN}"
-  figlet "Node"
-  echo -e "${NONE}"
-  _installPackagesYay nvm
-  source /usr/share/nvm/init-nvm.sh
-  nvm install --lts
+echo -e "${GREEN}"
+figlet "Node"
+echo -e "${NONE}"
+_installPackagesYay nvm
+source /usr/share/nvm/init-nvm.sh
+nvm install --lts
 
-  # docker
-  echo -e "${GREEN}"
-  figlet "Docker"
-  echo -e "${NONE}"
-  sudo pacman -Sy docker --noconfirm
-  sudo systemctl enable --now docker.service
-  sudo usermod -aG docker $USER
-  sudo pacman -Sy docker-compose --noconfirm
+# docker
+echo -e "${GREEN}"
+figlet "Docker"
+echo -e "${NONE}"
+sudo pacman -Sy docker --noconfirm
+sudo systemctl enable --now docker.service
+sudo usermod -aG docker $USER
+sudo pacman -Sy docker-compose --noconfirm
 
-  # vscode
-  echo -e "${GREEN}"
-  figlet "VSCode"
-  echo -e "${NONE}"
-  sudo pacman -Sy gnome-keyring --noconfirm
-  _installPackagesYay visual-studio-code-bin
+# vscode
+echo -e "${GREEN}"
+figlet "VSCode"
+echo -e "${NONE}"
+sudo pacman -Sy gnome-keyring --noconfirm
+_installPackagesYay visual-studio-code-bin
 
-  # rest client
-  _installPackagesYay bruno-bin
+# rest client
+_installPackagesYay bruno-bin
 
-  # neovim
-  echo -e "${GREEN}"
-  figlet "Neovim"
-  echo -e "${NONE}"
-  sudo pacman -Sy neovim fzf zoxide ripgrep fd --noconfirm
-  _installPackagesYay vim-plug
-  git clone https://github.com/NvChad/starter ~/.config/nvchad
-  git clone --depth 1 https://github.com/AstroNvim/template ~/.config/astronvim
-  git clone https://github.com/LazyVim/starter ~/.config/lazyvim
+# neovim
+echo -e "${GREEN}"
+figlet "Neovim"
+echo -e "${NONE}"
+sudo pacman -Sy neovim ripgrep fd --noconfirm
+_installPackagesYay vim-plug
+git clone https://github.com/NvChad/starter ~/.config/nvchad
+git clone --depth 1 https://github.com/AstroNvim/template ~/.config/astronvim
+git clone https://github.com/LazyVim/starter ~/.config/lazyvim
 
 # -----------------------------------------------------
 # apps
