@@ -153,7 +153,7 @@ figlet "CorePackages"
 echo -e "${NONE}"
 
 # packages
-sudo pacman -Sy hyprland rofi-wayland dunst hyprpaper hyprlock hypridle xdg-desktop-portal-hyprland sddm \
+sudo pacman -Sy --needed hyprland rofi-wayland dunst hyprpaper hyprlock hypridle xdg-desktop-portal-hyprland sddm \
                 alacritty kitty ghostty vim zsh starship picom qt5-wayland qt6-wayland cliphist \
                 thunar gvfs thunar-volman tumbler thunar-archive-plugin ark \
                 network-manager-applet blueman brightnessctl \
@@ -189,14 +189,14 @@ ssh-keygen -t ed25519 -C "${git_email}"
 echo -e "${GREEN}"
 figlet "Java"
 echo -e "${NONE}"
-sudo pacman -Sy jdk25-openjdk maven --noconfirm
+sudo pacman -Sy --needed jdk25-openjdk maven --noconfirm
 _installPackagesYay google-java-format
 
 # python
 echo -e "${GREEN}"
 figlet "Python"
 echo -e "${NONE}"
-sudo pacman -Sy python-pip --noconfirm
+sudo pacman -Sy --needed python-pip --noconfirm
 
 # node
 echo -e "${GREEN}"
@@ -210,16 +210,16 @@ nvm install --lts
 echo -e "${GREEN}"
 figlet "Docker"
 echo -e "${NONE}"
-sudo pacman -Sy docker --noconfirm
+sudo pacman -Sy --needed docker --noconfirm
 sudo systemctl enable --now docker.service
 sudo usermod -aG docker $USER
-sudo pacman -Sy docker-compose --noconfirm
+sudo pacman -Sy --needed docker-compose --noconfirm
 
 # vscode
 echo -e "${GREEN}"
 figlet "VSCode"
 echo -e "${NONE}"
-sudo pacman -Sy gnome-keyring --noconfirm
+sudo pacman -Sy --needed gnome-keyring --noconfirm
 _installPackagesYay visual-studio-code-bin
 
 # rest client
@@ -229,7 +229,7 @@ _installPackagesYay bruno-bin
 echo -e "${GREEN}"
 figlet "Neovim"
 echo -e "${NONE}"
-sudo pacman -Sy neovim ripgrep fd --noconfirm
+sudo pacman -Sy --needed neovim ripgrep fd --noconfirm
 _installPackagesYay vim-plug
 [ -d ~/.config/nvchad ]    || git clone https://github.com/NvChad/starter ~/.config/nvchad
 [ -d ~/.config/astronvim ] || git clone --depth 1 https://github.com/AstroNvim/template ~/.config/astronvim
@@ -243,7 +243,7 @@ _installPackagesYay vim-plug
 echo -e "${GREEN}"
 figlet "GUI Apps"
 echo -e "${NONE}"
-sudo pacman -Sy okular feh gwenview mpv qbittorrent bitwarden qalculate-gtk veracrypt discord --noconfirm
+sudo pacman -Sy --needed okular feh gwenview mpv qbittorrent bitwarden qalculate-gtk veracrypt discord --noconfirm
 _installPackagesYay onlyoffice-bin brave-bin librewolf-bin zen-browser-bin ventoy-bin
 
 # set default browser
@@ -254,7 +254,7 @@ xdg-settings set default-web-browser zen-browser.desktop
 echo -e "${GREEN}"
 figlet "TerminalUtils"
 echo -e "${NONE}"
-sudo pacman -Sy tmux yazi fastfetch htop fzf zoxide --noconfirm
+sudo pacman -Sy --needed tmux yazi fastfetch htop fzf zoxide --noconfirm
 
 
 # -----------------------------------------------------
@@ -285,14 +285,14 @@ hl.config({
     },
 })" > ./config/hypr/conf/environment.lua
 
-echo \
+grep -qF 'electron-flickering-fix' ./config/hypr/hyprland.lua || echo \
 "
 -- Flickering fix
 require(\"conf/electron-flickering-fix\")" >> ./config/hypr/hyprland.lua
 fi
 
 if $intel ;then
-    echo \
+    grep -qF 'LIBVA_DRIVER_NAME' ./config/hypr/conf/environment.lua || echo \
 "
 -- Intel GPU
 -- https://wiki.hyprland.org/FAQ/
@@ -325,20 +325,23 @@ sudo sed -i "s/Inherits=.*/Inherits=Qogir-Dark/g" /usr/share/icons/default/index
 echo -e "${GREEN}"
 figlet "Rofi"
 echo -e "${NONE}"
-git clone --depth=1 https://github.com/adi1090x/rofi.git ~/rofi
-cd ~/rofi
-chmod +x setup.sh
-sh setup.sh
-cd -
-rm -rf ~/rofi
+if [ ! -d ~/.config/rofi ]; then
+    git clone --depth=1 https://github.com/adi1090x/rofi.git ~/rofi
+    (cd ~/rofi && chmod +x setup.sh && sh setup.sh)
+    rm -rf ~/rofi
+else
+    echo ":: Rofi themes already installed, skipping."
+fi
 
 # sddm
 echo -e "${GREEN}"
 figlet "SDDM"
 echo -e "${NONE}"
 sudo systemctl enable sddm
-sudo git clone https://github.com/keyitdev/sddm-astronaut-theme.git /usr/share/sddm/themes/sddm-astronaut-theme
-sudo cp /usr/share/sddm/themes/sddm-astronaut-theme/Fonts/* /usr/share/fonts/
+if [ ! -d /usr/share/sddm/themes/sddm-astronaut-theme ]; then
+    sudo git clone https://github.com/keyitdev/sddm-astronaut-theme.git /usr/share/sddm/themes/sddm-astronaut-theme
+    sudo cp /usr/share/sddm/themes/sddm-astronaut-theme/Fonts/* /usr/share/fonts/
+fi
 echo "[Theme]
 Current=sddm-astronaut-theme" | sudo tee /etc/sddm.conf
 
@@ -346,8 +349,8 @@ Current=sddm-astronaut-theme" | sudo tee /etc/sddm.conf
 echo -e "${GREEN}"
 figlet "WallpapersScreenshots"
 echo -e "${NONE}"
-mkdir ~/Pictures/screenshots
-cp -r wallpapers/** ~/Pictures
+mkdir -p ~/Pictures/screenshots
+[ ! -f ~/Pictures/wallpaper1.jpg ] && cp -r wallpapers/** ~/Pictures
 
 # system configs
 echo -e "${GREEN}"
@@ -360,9 +363,13 @@ sudo systemctl enable fstrim.timer
 echo -e "${GREEN}"
 figlet "Swapfile"
 echo -e "${NONE}"
-sudo mkswap -U clear --size 8G --file /swapfile
-sudo swapon /swapfile
-echo "/swapfile				  swap		 swap	 defaults   0 0" | sudo tee -a /etc/fstab
+if [ ! -f /swapfile ]; then
+    sudo mkswap -U clear --size 8G --file /swapfile
+    sudo swapon /swapfile
+    echo "/swapfile				  swap		 swap	 defaults   0 0" | sudo tee -a /etc/fstab
+else
+    echo ":: Swapfile already exists, skipping."
+fi
 
 
 # -----------------------------------------------------
@@ -397,9 +404,9 @@ if $nvidia ;then
     echo -e "${GREEN}"
     figlet "Nvidia"
     echo -e "${NONE}"
-    sudo pacman -S nvidia-dkms nvidia-utils lib32-nvidia-utils nvidia-settings libva-nvidia-driver --noconfirm
-    echo "force_drivers+=\" nvidia nvidia_modeset nvidia_uvm nvidia_drm \"" | sudo tee -a /etc/dracut.conf.d/nvidia.conf
-    echo "options nvidia_drm modeset=1 fbdev=1" | sudo tee -a /etc/modprobe.d/nvidia.conf
+    sudo pacman -Sy --needed nvidia-dkms nvidia-utils lib32-nvidia-utils nvidia-settings libva-nvidia-driver --noconfirm
+    grep -qF 'nvidia_drm' /etc/dracut.conf.d/nvidia.conf 2>/dev/null || echo "force_drivers+=\" nvidia nvidia_modeset nvidia_uvm nvidia_drm \"" | sudo tee -a /etc/dracut.conf.d/nvidia.conf
+    grep -qF 'nvidia_drm' /etc/modprobe.d/nvidia.conf 2>/dev/null || echo "options nvidia_drm modeset=1 fbdev=1" | sudo tee -a /etc/modprobe.d/nvidia.conf
     if [[ "$boot" == "systemd" ]]; then
       sudo reinstall-kernels
     elif [[ "$boot" == "grub" ]]; then
@@ -413,7 +420,7 @@ if $intel ;then
     echo -e "${GREEN}"
     figlet "Intel"
     echo -e "${NONE}"
-    sudo pacman -S intel-media-driver libva-utils --noconfirm
+    sudo pacman -Sy --needed intel-media-driver libva-utils --noconfirm
 fi
 
 # cleanup
