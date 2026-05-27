@@ -16,7 +16,7 @@ The script is interactive — it uses `gum` for prompts (boot type, monitor reso
 
 ## Repository structure
 
-- **`install.sh`** — the entire installer; installs packages via pacman/yay, copies configs, sets up SDDM, swapfile, optional dev tools, kernel, and Nvidia drivers.
+- **`install.sh`** — the entire installer; installs packages via pacman/yay, copies configs, sets up SDDM, swapfile, dev tools, kernel, and GPU drivers.
 - **`config/`** — dotfiles that get copied to `~/.config/` (and some to `~/`). Edit files here, not after they've been deployed.
 - **`config/hypr/hyprland.lua`** — Hyprland's entry point; it `require()`s all modules from `config/hypr/conf/`.
 - **`config/hypr/conf/`** — modular Lua config files for Hyprland. The installer generates `monitor.lua` at install time from user input and optionally appends to `environment.lua` for Nvidia.

@@ -6,7 +6,7 @@ if [ "$(id -u)" = 0 ]; then
 fi
 
 LOG_FILE="$HOME/hyprland-install.log"
-exec > >(tee -a "$LOG_FILE") 2>&1
+exec > >(tee "$LOG_FILE") 2>&1
 
 clear
 GREEN='\033[0;32m'
@@ -107,7 +107,7 @@ echo -e "${NONE}"
 echo "Are you using systemd boot or grub?"
 boot=$(gum choose systemd grub)
 echo "What is the resolution and refresh rate of your monitor?"
-echo "Answare in the following format eg. 3440x1440@144"
+echo "Answer in the following format eg. 3440x1440@144"
 resolution=$(gum input --placeholder "Resolution and refresh rate..." --value "1920x1080@60")
 echo "Which key do you want to use as the mod key?"
 mod=$(gum choose SUPER ALT)
@@ -178,7 +178,12 @@ echo "Email: ${git_email}"
 git config --global user.name "${git_name}"
 git config --global user.email "${git_email}"
 git config --global pull.ff only
-ssh-keygen
+
+echo -e "${GREEN}"
+figlet "SSHKey"
+echo -e "${NONE}"
+echo ":: You will be prompted to choose a key location and passphrase."
+ssh-keygen -t ed25519 -C "${git_email}"
 
 # java
 echo -e "${GREEN}"
@@ -194,41 +199,41 @@ echo -e "${NONE}"
 sudo pacman -Sy python-pip --noconfirm
 
 # node
-  echo -e "${GREEN}"
-  figlet "Node"
-  echo -e "${NONE}"
-  _installPackagesYay nvm
-  source /usr/share/nvm/init-nvm.sh
-  nvm install --lts
+echo -e "${GREEN}"
+figlet "Node"
+echo -e "${NONE}"
+_installPackagesYay nvm
+source /usr/share/nvm/init-nvm.sh
+nvm install --lts
 
-  # docker
-  echo -e "${GREEN}"
-  figlet "Docker"
-  echo -e "${NONE}"
-  sudo pacman -Sy docker --noconfirm
-  sudo systemctl enable --now docker.service
-  sudo usermod -aG docker $USER
-  sudo pacman -Sy docker-compose --noconfirm
+# docker
+echo -e "${GREEN}"
+figlet "Docker"
+echo -e "${NONE}"
+sudo pacman -Sy docker --noconfirm
+sudo systemctl enable --now docker.service
+sudo usermod -aG docker $USER
+sudo pacman -Sy docker-compose --noconfirm
 
-  # vscode
-  echo -e "${GREEN}"
-  figlet "VSCode"
-  echo -e "${NONE}"
-  sudo pacman -Sy gnome-keyring --noconfirm
-  _installPackagesYay visual-studio-code-bin
+# vscode
+echo -e "${GREEN}"
+figlet "VSCode"
+echo -e "${NONE}"
+sudo pacman -Sy gnome-keyring --noconfirm
+_installPackagesYay visual-studio-code-bin
 
-  # rest client
-  _installPackagesYay bruno-bin
+# rest client
+_installPackagesYay bruno-bin
 
-  # neovim
-  echo -e "${GREEN}"
-  figlet "Neovim"
-  echo -e "${NONE}"
-  sudo pacman -Sy neovim fzf zoxide ripgrep fd --noconfirm
-  _installPackagesYay vim-plug
-  git clone https://github.com/NvChad/starter ~/.config/nvchad
-  git clone --depth 1 https://github.com/AstroNvim/template ~/.config/astronvim
-  git clone https://github.com/LazyVim/starter ~/.config/lazyvim
+# neovim
+echo -e "${GREEN}"
+figlet "Neovim"
+echo -e "${NONE}"
+sudo pacman -Sy neovim ripgrep fd --noconfirm
+_installPackagesYay vim-plug
+[ -d ~/.config/nvchad ]    || git clone https://github.com/NvChad/starter ~/.config/nvchad
+[ -d ~/.config/astronvim ] || git clone --depth 1 https://github.com/AstroNvim/template ~/.config/astronvim
+[ -d ~/.config/lazyvim ]   || git clone https://github.com/LazyVim/starter ~/.config/lazyvim
 
 # -----------------------------------------------------
 # apps
@@ -363,6 +368,17 @@ echo "/swapfile				  swap		 swap	 defaults   0 0" | sudo tee -a /etc/fstab
 # -----------------------------------------------------
 # kernel and drivers
 # -----------------------------------------------------
+
+# check for LUKS encryption and ensure dracut crypt module is present
+if lsblk -o TYPE | grep -q "crypt"; then
+    echo ":: Encrypted drive detected."
+    if ! grep -rq 'add_dracutmodules.*crypt' /etc/dracut.conf.d/ 2>/dev/null; then
+        echo ":: Adding crypt module to dracut config..."
+        echo 'add_dracutmodules+=" crypt "' | sudo tee /etc/dracut.conf.d/crypt.conf
+    else
+        echo ":: dracut crypt module already configured."
+    fi
+fi
 
 # zen kernel
 echo -e "${GREEN}"
