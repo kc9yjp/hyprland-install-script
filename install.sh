@@ -5,6 +5,9 @@ if [ "$(id -u)" = 0 ]; then
     exit 1
 fi
 
+LOG_FILE="$HOME/hyprland-install.log"
+exec > >(tee -a "$LOG_FILE") 2>&1
+
 clear
 GREEN='\033[0;32m'
 NONE='\033[0m'
@@ -425,3 +428,4 @@ echo -e "${NONE}"
 
 echo
 echo "DONE! Please reboot your system!"
+echo ":: Full install log saved to $LOG_FILE"
