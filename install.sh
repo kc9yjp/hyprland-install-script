@@ -11,16 +11,14 @@ RED='\033[1;31m'
 NONE='\033[0m'
 
 _on_error() {
-    local line="$1" cmd="$2"
+    local cmd="$1"
     echo
-    echo -e "${RED}"
-    echo "  !! INSTALL FAILED !!"
-    echo "  Stopped at line ${line}: ${cmd}"
-    echo "  Fix the issue above and re-run the script."
-    echo -e "${NONE}"
+    echo -e "${RED}  !! INSTALL FAILED !!"
+    echo "  Stopped at line ${BASH_LINENO[0]}: ${cmd}"
+    echo -e "  Fix the issue above and re-run the script.${NONE}"
     echo
 }
-trap '_on_error $LINENO "$BASH_COMMAND"' ERR
+trap '_on_error "$BASH_COMMAND"' ERR
 
 # -----------------------------------------------------
 # functions
@@ -492,7 +490,12 @@ fi
 echo -e "${GREEN}"
 figlet "Cleanup"
 echo -e "${NONE}"
-orphans=$(pacman -Qtdq 2>/dev/null) && sudo pacman -Rns $orphans --noconfirm || echo ":: No orphaned packages to remove."
+mapfile -t orphans < <(pacman -Qtdq 2>/dev/null)
+if [ ${#orphans[@]} -gt 0 ]; then
+    sudo pacman -Rns "${orphans[@]}" --noconfirm
+else
+    echo ":: No orphaned packages to remove."
+fi
 yay -Sc --noconfirm
 
 # default shell
