@@ -17,6 +17,7 @@ _on_error() {
     echo "  Stopped at line ${BASH_LINENO[0]}: ${cmd}"
     echo -e "  Fix the issue above and re-run the script.${NONE}"
     echo
+    exit 1
 }
 trap '_on_error "$BASH_COMMAND"' ERR
 
