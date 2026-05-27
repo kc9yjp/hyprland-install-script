@@ -5,12 +5,22 @@ if [ "$(id -u)" = 0 ]; then
     exit 1
 fi
 
-LOG_FILE="$HOME/hyprland-install.log"
-exec > >(tee "$LOG_FILE") 2>&1
-
 clear
 GREEN='\033[0;32m'
+RED='\033[1;31m'
 NONE='\033[0m'
+
+_on_error() {
+    local line="$1" cmd="$2"
+    echo
+    echo -e "${RED}"
+    echo "  !! INSTALL FAILED !!"
+    echo "  Stopped at line ${line}: ${cmd}"
+    echo "  Fix the issue above and re-run the script."
+    echo -e "${NONE}"
+    echo
+}
+trap '_on_error $LINENO "$BASH_COMMAND"' ERR
 
 # -----------------------------------------------------
 # functions
@@ -21,7 +31,7 @@ NONE='\033[0m'
 _gum() {
     local tmp exit_code
     tmp=$(mktemp)
-    gum "$@" >"$tmp" 2> >(tee /dev/tty >&2)
+    gum "$@" >"$tmp" 2>/dev/tty
     exit_code=$?
     cat "$tmp"
     rm -f "$tmp"
@@ -482,7 +492,7 @@ fi
 echo -e "${GREEN}"
 figlet "Cleanup"
 echo -e "${NONE}"
-sudo pacman -Rns $(pacman -Qtdq) --noconfirm
+orphans=$(pacman -Qtdq 2>/dev/null) && sudo pacman -Rns $orphans --noconfirm || echo ":: No orphaned packages to remove."
 yay -Sc --noconfirm
 
 # default shell
@@ -494,4 +504,3 @@ echo -e "${NONE}"
 
 echo
 echo "DONE! Please reboot your system!"
-echo ":: Full install log saved to $LOG_FILE"
