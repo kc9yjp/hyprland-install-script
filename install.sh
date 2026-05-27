@@ -174,37 +174,33 @@ _installPackagesYay waybar-git wlogout waypaper hyprland-qtutils qogir-gtk-theme
 # development
 # -----------------------------------------------------
 
-if gum confirm "Do you need development setup?" ;then
-  # git
-  echo -e "${GREEN}"
-  figlet "Git"
-  echo -e "${NONE}"
-  git_name=$(gum input --placeholder "Enter git name...")
-  echo "Name: ${git_name}"
-  git_email=$(gum input --placeholder "Enter git email...")
-  echo "Email: ${git_email}"
-  git config --global user.name "${git_name}"
-  git config --global user.email "${git_email}"
-  git config --global pull.ff only
-  ssh-keygen
+# development
+echo -e "${GREEN}"
+figlet "Git"
+echo -e "${NONE}"
+git_name=$(gum input --placeholder "Enter git name...")
+echo "Name: ${git_name}"
+git_email=$(gum input --placeholder "Enter git email...")
+echo "Email: ${git_email}"
+git config --global user.name "${git_name}"
+git config --global user.email "${git_email}"
+git config --global pull.ff only
+ssh-keygen
 
-  # java
-  echo -e "${GREEN}"
-  figlet "Java"
-  echo -e "${NONE}"
-  sudo pacman -Sy jdk25-openjdk maven --noconfirm
-  _installPackagesYay google-java-format
+# java
+echo -e "${GREEN}"
+figlet "Java"
+echo -e "${NONE}"
+sudo pacman -Sy jdk25-openjdk maven --noconfirm
+_installPackagesYay google-java-format
 
-  # python
-  echo -e "${GREEN}"
-  figlet "Python"
-  echo -e "${NONE}"
-  sudo pacman -Sy python-pip --noconfirm
+# python
+echo -e "${GREEN}"
+figlet "Python"
+echo -e "${NONE}"
+sudo pacman -Sy python-pip --noconfirm
 
-  # jetbrains
-  _installPackagesYay jetbrains-toolbox
-
-  # node
+# node
   echo -e "${GREEN}"
   figlet "Node"
   echo -e "${NONE}"
@@ -240,7 +236,6 @@ if gum confirm "Do you need development setup?" ;then
   git clone https://github.com/NvChad/starter ~/.config/nvchad
   git clone --depth 1 https://github.com/AstroNvim/template ~/.config/astronvim
   git clone https://github.com/LazyVim/starter ~/.config/lazyvim
-fi
 
 # -----------------------------------------------------
 # apps
